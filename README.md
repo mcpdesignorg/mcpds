@@ -110,6 +110,29 @@ npm install -g @mcpds/spec
 mcpds-spec --help
 ```
 
+## AI Skills
+
+Install the MCPDS skill for Claude Code, Cursor, and GitHub Copilot with one command.
+
+Globally, for all projects:
+
+```bash
+npx skills add mcpdesignorg/mcpds -g -a claude-code -a cursor -a github-copilot -y
+```
+
+For this project only:
+
+```bash
+npx skills add mcpdesignorg/mcpds -a claude-code -a cursor -a github-copilot -y
+```
+
+Update or remove the skill:
+
+```bash
+npx skills update mcpds
+npx skills remove mcpds
+```
+
 ## JSON Schema
 
 The schema is [defined in TypeScript](src/schema/mcpds-schema.ts) first, but [made available as JSON Schema](schemas/mcpds-1.0.schema.json) as well, for wider compatibility. The `.json` file is generated from the TypeScript source via `tools/generate-schema.mjs`.
