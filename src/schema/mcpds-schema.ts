@@ -1,0 +1,354 @@
+export const mcpdsSchema = {
+  $schema: "https://json-schema.org/draft/2020-12/schema",
+  $id: "https://mcpdesign.org/schemas/mcpds-1.0.schema.json",
+  title: "MCP Design Specification 1.0 (MCPDS)",
+  description:
+    "Structural JSON Schema for MCPDS 1.0 documents. Validates the top-level shape of an mcp.yaml / *.mcp.yaml file. Semantic rules from section 12 of the specification (reverse-DNS naming, allowed transport types, $ref resolution, cross-collection uniqueness, etc.) are enforced by tooling in addition to this schema.",
+  type: "object",
+  required: ["mcpds", "server", "transports"],
+  additionalProperties: true,
+  $defs: {
+    icon: {
+      type: "object",
+      additionalProperties: true,
+      required: ["src"],
+      properties: {
+        src: { type: "string", format: "uri", minLength: 1 },
+        mimeType: { type: "string" },
+        sizes: { type: "array", items: { type: "string", pattern: "^(\\d+x\\d+|any)$" } },
+        theme: { type: "string", enum: ["light", "dark"] }
+      }
+    },
+    input: {
+      type: "object",
+      additionalProperties: true,
+      properties: {
+        description: { type: "string" },
+        isRequired: { type: "boolean" },
+        format: { type: "string", enum: ["string", "number", "boolean", "filepath"] },
+        value: { type: "string" },
+        isSecret: { type: "boolean" },
+        default: { type: "string" },
+        placeholder: { type: "string" },
+        choices: { type: "array", items: { type: "string" } }
+      }
+    },
+    inputWithVariables: {
+      allOf: [
+        { $ref: "#/$defs/input" },
+        {
+          type: "object",
+          properties: {
+            variables: {
+              type: "object",
+              additionalProperties: { $ref: "#/$defs/input" }
+            }
+          }
+        }
+      ]
+    },
+    keyValueInput: {
+      allOf: [
+        { $ref: "#/$defs/inputWithVariables" },
+        {
+          type: "object",
+          required: ["name"],
+          properties: {
+            name: { type: "string", minLength: 1 }
+          }
+        }
+      ]
+    },
+    argument: {
+      allOf: [
+        { $ref: "#/$defs/inputWithVariables" },
+        {
+          type: "object",
+          required: ["type"],
+          properties: {
+            type: { type: "string", enum: ["positional", "named"] },
+            name: { type: "string" },
+            valueHint: { type: "string" },
+            isRepeated: { type: "boolean" }
+          },
+          allOf: [
+            {
+              if: { properties: { type: { const: "named" } }, required: ["type"] },
+              then: { required: ["name"] }
+            },
+            {
+              if: { properties: { type: { const: "positional" } }, required: ["type"] },
+              then: { anyOf: [{ required: ["valueHint"] }, { required: ["value"] }] }
+            }
+          ]
+        }
+      ]
+    },
+    localTransport: {
+      type: "object",
+      additionalProperties: true,
+      required: ["type"],
+      properties: {
+        type: { type: "string", enum: ["stdio", "streamable-http", "sse"] },
+        url: { type: "string" },
+        headers: { type: "array", items: { $ref: "#/$defs/keyValueInput" } }
+      },
+      if: {
+        required: ["type"],
+        properties: {
+          type: { enum: ["streamable-http", "sse"] }
+        }
+      },
+      then: {
+        required: ["url"],
+        properties: {
+          url: { type: "string", pattern: "^(https?://[^\\s]+|\\{[a-zA-Z_][a-zA-Z0-9_]*\\}[^\\s]*)$" }
+        }
+      }
+    }
+  },
+  properties: {
+    mcpds: { type: "string", const: "1.0" },
+    server: {
+      type: "object",
+      required: ["name", "description", "version"],
+      additionalProperties: true,
+      properties: {
+        name: { type: "string", minLength: 1 },
+        title: { type: "string", nullable: true },
+        description: { type: "string", minLength: 1 },
+        version: { type: "string", minLength: 1 },
+        websiteUrl: { type: "string", nullable: true },
+        repository: {
+          type: "object",
+          nullable: true,
+          additionalProperties: true,
+          required: ["url", "source"],
+          properties: {
+            url: { type: "string", minLength: 1 },
+            source: { type: "string", minLength: 1 },
+            id: { type: "string", nullable: true }
+          }
+        },
+        icons: { type: "array", nullable: true, items: { $ref: "#/$defs/icon" } },
+        authors: { type: "array", nullable: true, items: { type: "object", additionalProperties: true } },
+        license: { type: "string", nullable: true },
+        meta: { type: "object", nullable: true, additionalProperties: true }
+      }
+    },
+    instructions: { type: "string", nullable: true },
+    capabilities: {
+      type: "object",
+      nullable: true,
+      additionalProperties: true,
+      properties: {
+        experimental: {
+          type: "object",
+          nullable: true,
+          additionalProperties: { type: "boolean" }
+        }
+      }
+    },
+    requiresClientCapabilities: {
+      type: "array",
+      nullable: true,
+      items: { type: "string" }
+    },
+    transports: {
+      type: "array",
+      minItems: 1,
+      items: {
+        type: "object",
+        required: ["type"],
+        additionalProperties: true,
+        properties: {
+          type: { type: "string" },
+          url: { type: "string", nullable: true }
+        },
+        if: {
+          required: ["type"],
+          properties: {
+            type: { enum: ["streamable-http", "sse"] }
+          }
+        },
+        then: {
+          required: ["url"],
+          properties: {
+            url: { type: "string", minLength: 1 }
+          }
+        }
+      }
+    },
+    auth: { type: "object", nullable: true, additionalProperties: true },
+    packaging: {
+      type: "object",
+      nullable: true,
+      additionalProperties: true,
+      properties: {
+        packages: {
+          type: "array",
+          nullable: true,
+          items: {
+            type: "object",
+            additionalProperties: true,
+            required: ["registryType", "identifier", "transport"],
+            properties: {
+              registryType: { type: "string", minLength: 1 },
+              registryBaseUrl: { type: "string", format: "uri" },
+              identifier: { type: "string", minLength: 1 },
+              version: { type: "string", minLength: 1, maxLength: 255, not: { const: "latest" } },
+              fileSha256: { type: "string", pattern: "^[a-f0-9]{64}$" },
+              runtimeHint: { type: "string" },
+              runtimeArguments: { type: "array", items: { $ref: "#/$defs/argument" } },
+              packageArguments: { type: "array", items: { $ref: "#/$defs/argument" } },
+              environmentVariables: { type: "array", items: { $ref: "#/$defs/keyValueInput" } },
+              transport: { $ref: "#/$defs/localTransport" }
+            },
+            if: {
+              required: ["registryType"],
+              properties: {
+                registryType: { const: "mcpb" }
+              }
+            },
+            then: {
+              required: ["fileSha256"],
+              properties: {
+                fileSha256: { type: "string", pattern: "^[a-f0-9]{64}$" }
+              }
+            }
+          }
+        }
+      }
+    },
+    tools: {
+      type: "array",
+      nullable: true,
+      items: {
+        type: "object",
+        additionalProperties: true,
+        required: ["name", "inputSchema"],
+        properties: {
+          name: { type: "string", minLength: 1, maxLength: 128, pattern: "^[A-Za-z0-9_.-]+$" },
+          title: { type: "string" },
+          description: { type: "string" },
+          inputSchema: { type: "object" },
+          outputSchema: { type: "object", nullable: true },
+          annotations: {
+            type: "object",
+            nullable: true,
+            additionalProperties: true,
+            properties: {
+              title: { type: "string" },
+              readOnlyHint: { type: "boolean", nullable: true },
+              destructiveHint: { type: "boolean", nullable: true },
+              idempotentHint: { type: "boolean", nullable: true },
+              openWorldHint: { type: "boolean", nullable: true }
+            }
+          },
+          execution: {
+            type: "object",
+            nullable: true,
+            additionalProperties: true,
+            properties: {
+              taskSupport: { type: "string", enum: ["forbidden", "optional", "required"] }
+            }
+          },
+          icons: { type: "array", nullable: true, items: { $ref: "#/$defs/icon" } },
+          examples: {
+            type: "array",
+            nullable: true,
+            items: {
+              type: "object",
+              additionalProperties: true,
+              properties: {
+                name: { type: "string", nullable: true },
+                input: {},
+                output: {}
+              }
+            }
+          },
+          meta: { type: "object", nullable: true, additionalProperties: true }
+        }
+      }
+    },
+    resources: {
+      type: "array",
+      nullable: true,
+      items: {
+        type: "object",
+        additionalProperties: true,
+        required: ["uri", "name"],
+        properties: {
+          uri: { type: "string", minLength: 1 },
+          name: { type: "string", minLength: 1 },
+          icons: { type: "array", nullable: true, items: { $ref: "#/$defs/icon" } }
+        }
+      }
+    },
+    resourceTemplates: {
+      type: "array",
+      nullable: true,
+      items: {
+        type: "object",
+        additionalProperties: true,
+        required: ["uriTemplate", "name"],
+        properties: {
+          uriTemplate: { type: "string", minLength: 1 },
+          name: { type: "string", minLength: 1 },
+          icons: { type: "array", nullable: true, items: { $ref: "#/$defs/icon" } },
+          annotations: {
+            type: "object",
+            nullable: true,
+            additionalProperties: true,
+            properties: {
+              audience: { type: "array", nullable: true, items: { type: "string" } },
+              priority: { type: "number", nullable: true, minimum: 0, maximum: 1 },
+              lastModified: { type: "string", nullable: true }
+            }
+          },
+          parameters: {
+            type: "array",
+            nullable: true,
+            items: {
+              type: "object",
+              additionalProperties: true,
+              required: ["name"],
+              properties: {
+                name: { type: "string", minLength: 1 }
+              }
+            }
+          }
+        }
+      }
+    },
+    prompts: {
+      type: "array",
+      nullable: true,
+      items: {
+        type: "object",
+        additionalProperties: true,
+        required: ["name"],
+        properties: {
+          name: { type: "string", minLength: 1 },
+          icons: { type: "array", nullable: true, items: { $ref: "#/$defs/icon" } },
+          arguments: {
+            type: "array",
+            nullable: true,
+            items: {
+              type: "object",
+              additionalProperties: true,
+              required: ["name"],
+              properties: {
+                name: { type: "string", minLength: 1 },
+                title: { type: "string", nullable: true },
+                description: { type: "string", nullable: true },
+                required: { type: "boolean", nullable: true }
+              }
+            }
+          }
+        }
+      }
+    },
+    meta: { type: "object", nullable: true, additionalProperties: true }
+  }
+};

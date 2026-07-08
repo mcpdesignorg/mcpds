@@ -1,0 +1,248 @@
+mcpds: "1.0"
+
+server:
+  name: "org.mcpdesign/notes-server"
+  title: "Notes Server"
+  description: "An MCP server that manages markdown notes, exposes them as resources, and provides tools to create, search and summarize them."
+  version: "1.2.0"
+  websiteUrl: "https://mcpdesign.org"
+  repository:
+    url: "https://github.com/mcpdesignorg/notes-server"
+    source: "github"
+  icons:
+    - src: "https://mcpdesign.org/icons/notes.svg"
+      mimeType: "image/svg+xml"
+      sizes: ["any"]
+      theme: "dark"
+  authors:
+    - name: "Miroslav Holec"
+      url: "https://holec.ai"
+  license: "MIT"
+
+instructions: |
+  This server stores and retrieves the user's markdown notes. Prefer search_notes
+  before create_note to avoid duplicates. Notes are exposed as resources under the
+  note:// scheme. Use summarize_notes for digests rather than reading every note.
+
+capabilities:
+  tools:
+    listChanged: true
+  resources:
+    subscribe: true
+    listChanged: true
+  prompts:
+    listChanged: false
+  logging: true
+  completions: true
+
+transports:
+  - type: stdio
+  - type: streamable-http
+    url: "https://mcp.mcpdesign.org/notes/{tenant}"
+    variables:
+      tenant:
+        description: "Tenant workspace identifier."
+        isRequired: true
+        default: "personal"
+    sessions: true
+    sse: true
+    cors:
+      allowedOrigins: ["https://app.mcpdesign.org"]
+    headers:
+      - name: "MCP-Protocol-Version"
+        isRequired: true
+      - name: "MCP-API-KEY"
+        description: "API key for deployments that require a static header. OAuth remains declared in auth."
+        isRequired: true
+        isSecret: true
+
+auth:
+  schemes:
+    none:
+      type: none
+    oauth:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: "https://auth.mcpdesign.org/authorize"
+          tokenUrl: "https://auth.mcpdesign.org/token"
+          scopes:
+            "notes:read": "Read notes and metadata."
+            "notes:write": "Create and modify notes."
+      resourceMetadataUrl: "https://mcp.mcpdesign.org/.well-known/oauth-protected-resource"
+    env:
+      type: env
+      variables:
+        - name: "NOTES_API_TOKEN"
+          description: "Personal access token for the notes backend."
+          isSecret: true
+          isRequired: true
+
+tools:
+  - name: "create_note"
+    title: "Create Note"
+    description: |
+      Create a new markdown note with a title and body. Use this when the user
+      asks to save, jot down, or remember something. Returns the new note's id
+      and resource uri.
+    inputSchema:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: "Short note title."
+        body:
+          type: string
+          description: "Markdown body of the note."
+      required: ["title", "body"]
+      additionalProperties: false
+    outputSchema:
+      type: object
+      properties:
+        id: { type: string }
+        uri: { type: string, format: "uri" }
+      required: ["id", "uri"]
+    annotations:
+      title: "Create Note"
+      readOnlyHint: false
+      destructiveHint: false
+      idempotentHint: false
+      openWorldHint: false
+    examples:
+      - name: "Save a quick idea"
+        input:
+          title: "Talk idea"
+          body: "Compare MCP-SPEC vs OpenAPI for a TechEd session."
+        output:
+          id: "n_8f2a"
+          uri: "note://n_8f2a"
+
+  - name: "search_notes"
+    title: "Search Notes"
+    description: |
+      Full-text search across all notes. Use before creating a note to check for
+      duplicates, or when the user asks to find something they wrote earlier.
+    inputSchema:
+      type: object
+      properties:
+        query:
+          type: string
+          description: "Search query."
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 10
+      required: ["query"]
+      additionalProperties: false
+    outputSchema:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              title: { type: string }
+              uri: { type: string, format: "uri" }
+            required: ["id", "title", "uri"]
+      required: ["results"]
+    annotations:
+      readOnlyHint: true
+      openWorldHint: false
+
+  - name: "summarize_notes"
+    title: "Summarize Notes"
+    description: |
+      Produce a concise digest of notes matching a tag or query. Prefer this over
+      reading many notes individually.
+    inputSchema:
+      type: object
+      properties:
+        tag: { type: string, description: "Restrict to this tag." }
+        maxWords: { type: integer, default: 150, minimum: 20, maximum: 500 }
+      additionalProperties: false
+    annotations:
+      readOnlyHint: true
+      openWorldHint: false
+
+  - name: "delete_note"
+    title: "Delete Note"
+    description: "Permanently delete a note by id. Ask the user to confirm first."
+    inputSchema:
+      type: object
+      properties:
+        id: { type: string }
+      required: ["id"]
+      additionalProperties: false
+    annotations:
+      readOnlyHint: false
+      destructiveHint: true
+      idempotentHint: true
+      openWorldHint: false
+
+resources:
+  - uri: "note://index"
+    name: "note-index"
+    title: "Note Index"
+    description: "Machine-readable index of all notes (ids, titles)."
+    mimeType: "application/json"
+    annotations:
+      audience: ["assistant"]
+      priority: 0.6
+
+resourceTemplates:
+  - uriTemplate: "note://{id}"
+    name: "note-by-id"
+    title: "Note"
+    description: "Fetch the full markdown body of a single note by id."
+    mimeType: "text/markdown"
+    parameters:
+      - name: "id"
+        description: "The note's unique id."
+        required: true
+        completion: true
+
+prompts:
+  - name: "weekly_digest"
+    title: "Weekly Digest"
+    description: "Generate a weekly summary of notes for a given tag."
+    arguments:
+      - name: "tag"
+        description: "Tag to summarize."
+        required: true
+        completion: true
+      - name: "tone"
+        description: "Writing tone for the digest."
+        required: false
+        schema:
+          type: string
+          enum: ["concise", "detailed", "bullet"]
+          default: "concise"
+
+packaging:
+  packages:
+    - registryType: "npm"
+      registryBaseUrl: "https://registry.npmjs.org"
+      identifier: "@holec/notes-server"
+      version: "1.2.0"
+      transport: { type: "stdio" }
+      runtimeHint: "npx"
+      runtimeArguments:
+        - type: "named"
+          name: "-y"
+      environmentVariables:
+        - name: "NOTES_API_TOKEN"
+          description: "Personal access token for the notes backend."
+          isSecret: true
+          isRequired: true
+        - name: "LOG_LEVEL"
+          description: "debug | info | warn | error"
+          default: "info"
+  meta:
+    "io.modelcontextprotocol.registry/publisher-provided":
+      tool: "holec-ci"
+      version: "1.2.0"

@@ -1,0 +1,41 @@
+{
+  "name": "@mcpds/spec",
+  "version": "1.0.0",
+  "description": "MCP Design Specification (MCPDS). Canonical schema, TypeScript types, and human-readable specification.",
+  "type": "module",
+  "bin": {
+    "mcpds-spec": "dist/cli.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./schema": "./schemas/mcpds-1.0.schema.json"
+  },
+  "files": [
+    "dist",
+    "schemas",
+    "examples"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepack": "npm run build",
+    "prepare": "tsc -p tsconfig.json",
+    "gen:schema": "npm run build && node tools/generate-schema.mjs",
+    "check:schema": "npm run gen:schema && git diff --exit-code schemas/mcpds-1.0.schema.json",
+    "project:server": "node tools/project-server-json.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.12",
+    "typescript": "^5.5.4",
+    "yaml": "^2.9.0"
+  }
+}
