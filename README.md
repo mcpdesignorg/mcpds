@@ -23,6 +23,53 @@ This repository is the home of the MCPDS standard and the `@mcpds/spec` npm pack
 | [`src/schema/mcpds-schema.ts`](src/schema/mcpds-schema.ts) | JSON Schema object (TypeScript source of truth) |
 | [`examples/`](examples) | Sample `.mcp.yaml` documents |
 
+## Example
+
+A minimal `.mcp.yaml` describing a server, its transport, and one tool:
+
+```yaml
+mcpds: "1.0"
+
+server:
+  name: cz.restapi/mcp
+  title: REST API Design Guide
+  description: Provides documentation for REST API design.
+  version: 1.0.0
+  websiteUrl: https://www.restapi.cz
+  authors:
+    - name: Miroslav Holec
+      url: https://holec.ai
+  license: MIT
+
+transports:
+  - type: streamable-http
+    url: https://www.restapi.cz/mcp
+    headers:
+      - name: x-api-key
+        description: Authentication using an API key (token).
+        isRequired: true
+        isSecret: true
+  - type: stdio
+
+tools:
+  - name: fetch
+    title: Fetch Documentation
+    description: Returns relevant snippets for a given prompt via semantic search.
+    inputSchema:
+      type: object
+      properties:
+        phrase:
+          type: string
+          description: Search phrase.
+          minLength: 3
+          maxLength: 20
+      required: [phrase]
+```
+
+More complete examples live in [`examples/`](examples/) — see
+[`example.mcp.yaml`](examples/example.mcp.yaml) (full-feature reference with auth,
+resources and prompts).
+
 ## Using the package
 
 ```bash
