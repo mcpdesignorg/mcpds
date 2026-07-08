@@ -1,0 +1,124 @@
+mcpds: "1.0"
+x-mcpProtocolVersion: "2025-11-25"
+
+server:
+  name: "cz.restapi/mcp"
+  title: "REST API Design Guide"
+  description: "Provides documentation and prompt support for REST API design guidance."
+  version: "1.0.0"
+  websiteUrl: "https://www.restapi.cz"
+
+instructions: "Provides REST API design documentation. Use the fetch tool for semantic lookup across the documentation corpus."
+
+capabilities:
+  tools:
+    listChanged: false
+  resources:
+    subscribe: false
+    listChanged: false
+  prompts:
+    listChanged: false
+
+transports:
+  - type: stdio
+  - type: streamable-http
+    url: "http://localhost:5295/mcp"
+    sessions: true
+    sse: true
+    headers:
+      - name: "MCP-Protocol-Version"
+        description: "MCP protocol version requested by the client."
+        isRequired: false
+        default: "2025-11-25"
+      - name: "x-api-key"
+        description: "Optional API key header. Required only when the server is started with RESTAPI_MCP_API_KEY configured."
+        isRequired: false
+        isSecret: true
+
+auth:
+  schemes:
+    none:
+      type: none
+
+tools:
+  - name: "fetch"
+    title: "Fetch Documentation"
+    description: "Returns relevant snippets for the given prompt. Use it for semantic search across the whole system based on the prompt."
+    inputSchema:
+      type: object
+      properties:
+        phrase:
+          type: string
+          description: "Search phrase. Minimum length is 3 characters and maximum length is 20 characters."
+          minLength: 3
+          maxLength: 20
+          default: "api"
+        take:
+          type: integer
+          description: "Number of records to return. Allowed range is 1 through 20."
+          minimum: 1
+          maximum: 20
+          default: 5
+        page:
+          type: integer
+          description: "Page in the search results. Allowed range is 1 through 10."
+          minimum: 1
+          maximum: 10
+          default: 1
+      additionalProperties: false
+    outputSchema:
+      type: object
+      properties:
+        results:
+          type: array
+          description: "Matched REST API design guidance snippets."
+          items:
+            type: string
+        id:
+          type: string
+          description: "Stable documentation lookup identifier for the phrase and page."
+      required: ["results", "id"]
+      additionalProperties: false
+    annotations:
+      title: "Fetch Documentation"
+      readOnlyHint: true
+      destructiveHint: false
+      idempotentHint: true
+      openWorldHint: false
+    examples:
+      - name: "Find pagination guidance"
+        input:
+          phrase: "pagination"
+          take: 5
+          page: 1
+        output:
+          results:
+            - "Design pagination, filtering, sorting, and versioning consistently across resources before publishing a public API contract."
+          id: "restapi-docs:pagination:1"
+
+resources: []
+
+resourceTemplates: []
+
+prompts:
+  - name: "fetch"
+    title: "Fetch"
+    description: "Create a focused REST API documentation search prompt."
+    arguments:
+      - name: "phrase"
+        description: "Searchable phrase."
+        required: true
+
+x-runtime:
+  dotnet:
+    project: "src/RestApiMcpServer/RestApiMcpServer.csproj"
+    targetFramework: "net10.0"
+    packageReferences:
+      - name: "ModelContextProtocol.AspNetCore"
+        version: "1.4.0"
+    http:
+      run: "dotnet run --project src/RestApiMcpServer/RestApiMcpServer.csproj"
+      endpoint: "http://localhost:5295/mcp"
+      apiKeyEnvironmentVariable: "RESTAPI_MCP_API_KEY"
+    stdio:
+      run: "dotnet run --project src/RestApiMcpServer/RestApiMcpServer.csproj -- --stdio"
