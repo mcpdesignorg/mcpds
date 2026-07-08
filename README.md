@@ -46,6 +46,13 @@ npx @mcpds/spec --help
 npx @mcpds/spec --version
 ```
 
+From this repository checkout, use the local npm binary after building:
+
+```bash
+npm run build
+npm exec -- mcpds-spec --help
+```
+
 When installed globally, it exposes the `mcpds-spec` binary:
 
 ```bash
