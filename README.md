@@ -1,6 +1,9 @@
 # MCPDS — MCP Design Specification
 
-[![npm](badge)] [![License: MIT](badge)] [![Spec 1.0.0](badge)] [![JSON Schema](badge)]
+[![npm version](https://img.shields.io/npm/v/@mcpds/spec)](https://www.npmjs.com/package/@mcpds/spec)
+[![License: MIT](https://img.shields.io/npm/l/@mcpds/spec)](https://github.com/mirekholec/mcpds/blob/main/LICENSE)
+[![Spec 1.0.0](https://img.shields.io/badge/spec-1.0.0-blue)](https://www.npmjs.com/package/@mcpds/spec)
+[![JSON Schema](https://img.shields.io/badge/JSON%20Schema-draft--07-orange)](https://json-schema.org/)
 
 **A tool-agnostic, declarative format for describing Model Context Protocol servers.**
 
