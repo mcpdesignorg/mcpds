@@ -2,6 +2,20 @@
   "name": "@mcpds/spec",
   "version": "1.0.1",
   "description": "MCP Design Specification (MCPDS). Canonical schema, TypeScript types, and human-readable specification.",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "mcpds",
+    "mcp-server",
+    "ai-tools",
+    "cli",
+    "yaml",
+    "schema",
+    "json-schema",
+    "typescript",
+    "specification",
+    "validation"
+  ],
   "type": "module",
   "bin": {
     "mcpds-spec": "dist/cli.js"
