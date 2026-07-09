@@ -4,6 +4,7 @@
 [![License: MIT](https://img.shields.io/npm/l/@mcpds/spec)](https://github.com/mirekholec/mcpds/blob/main/LICENSE)
 [![Spec 1.0.0](https://img.shields.io/badge/spec-1.0.0-blue)](https://www.npmjs.com/package/@mcpds/spec)
 [![JSON Schema](https://img.shields.io/badge/JSON%20Schema-draft--07-orange)](https://json-schema.org/)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/mcpdesignorg/mcpds)
 
 **A tool-agnostic, declarative format for describing Model Context Protocol servers.**
 

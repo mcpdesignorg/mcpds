@@ -1,6 +1,6 @@
 {
   "name": "@mcpds/spec",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "MCP Design Specification (MCPDS). Canonical schema, TypeScript types, and human-readable specification.",
   "keywords": [
     "mcp",

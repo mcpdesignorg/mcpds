@@ -1,0 +1,26 @@
+{
+  "url": "https://context7.com/mcpdesignorg/mcpds",
+  "public_key": "pk_rJ0BqjS4RxcrohqbVFT71",
+  "projectTitle": "MCPDS - MCP Design Specification",
+  "description": "MCPDS is a tool-agnostic, declarative format for describing MCP servers. This repository contains the canonical MCPDS schema, TypeScript types, examples, and human-readable specification for the @mcpds/spec npm package.",
+  "folders": [
+    "schemas",
+    "src",
+    "examples",
+    "docs",
+    "skills"
+  ],
+  "excludeFolders": [
+    "dist",
+    "node_modules",
+    ".git"
+  ],
+  "rules": [
+    "Prefer schemas/mcpds-1.0.0.md for the human-readable MCPDS specification.",
+    "Use src/schema/mcpds-schema.ts as the canonical TypeScript schema source.",
+    "Use schemas/mcpds-1.0.schema.json for JSON Schema validation examples.",
+    "Use examples/example.mcp.yaml as the main complete MCPDS reference document.",
+    "Keep MCPDS aligned with the Model Context Protocol specification and avoid documenting fields outside the MCPDS schema."
+  ],
+  "previousVersions": []
+}
