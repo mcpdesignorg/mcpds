@@ -5,6 +5,7 @@
 [![Spec 1.0.0](https://img.shields.io/badge/spec-1.0.0-blue)](https://www.npmjs.com/package/@mcpds/spec)
 [![JSON Schema](https://img.shields.io/badge/JSON%20Schema-draft--07-orange)](https://json-schema.org/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/mcpdesignorg/mcpds)
+[![Context7](https://img.shields.io/badge/Context7-indexed-2ea44f?logo=data:image/svg+xml;base64,...)](https://context7.com/mcpdesignorg/mcpds)
 
 **A tool-agnostic, declarative format for describing Model Context Protocol servers.**
 
